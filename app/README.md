@@ -13,44 +13,68 @@ cd app
 flutter create --org iq.edu.qu.csit --platforms=android,ios .
 flutter pub get
 flutter pub run build_runner build --delete-conflicting-outputs   # freezed/json/drift codegen
+flutter gen-l10n                                                    # ARB → AppLocalizations
 flutter run
 ```
 
-## Layout
+## Architecture
 
 ```
 lib/
-├── main.dart                # entry, RTL, Arabic localization, theme
+├── main.dart                          # entry, RTL, Arabic localization, theme
 ├── app/
-│   ├── theme/               # colors + light/dark themes
-│   └── router/              # go_router with role-based guards (Phase 3)
+│   ├── theme/                         # colors + light/dark themes
+│   └── router/                        # go_router with role-based guards + redirect to change-password
 ├── core/
-│   ├── network/             # dio + interceptors (auto refresh, error mapping)
-│   ├── storage/             # Drift local DB, flutter_secure_storage
-│   ├── notifications/       # FCM + local scheduled reminders
-│   ├── device/              # device fingerprint, location
-│   └── utils/               # Arabic date/number formatting
-├── shared/                  # widgets + shared models
+│   ├── config.dart                   # AppConfig (base URL, timeouts)
+│   ├── network/
+│   │   ├── dio_client.dart            # Dio + auth interceptor (auto refresh on 401)
+│   │   └── token_storage.dart         # flutter_secure_storage wrapper
+│   ├── storage/
+│   │   └── local_db.dart              # Drift local cache (timetable, announcements, notifications, profile)
+│   ├── notifications/
+│   │   └── notification_service.dart  # FCM + local scheduled reminders (Phase 5 wires pipeline)
+│   ├── device/
+│   │   ├── device_fingerprint.dart   # per-device UUID (Android ID / iOS vendor)
+│   │   └── location_service.dart     # GPS for attendance scan only
+│   └── utils/
+│       └── arabic_formatting.dart     # Arabic month names, 12h time with ص/م, countdown
+├── shared/
+│   ├── models/                        # freezed + json_serializable models
+│   └── widgets/                       # (Phase 3+: reusable widgets)
 └── features/
-    ├── auth/                 # login, change password, device binding
-    ├── home/                 # next lecture, today, attendance %, news
-    ├── timetable/            # day + week views
-    ├── attendance/           # QR scanner, result, history
-    ├── materials/            # PDF viewer, week filter
-    ├── announcements/
-    ├── notifications/
-    └── profile_settings/
+    ├── auth/                          # login, change-password, /auth/me, providers
+    ├── home/                          # bottom-nav shell + home tab (next lecture + today)
+    ├── timetable/                     # day + week views, stale-while-revalidate
+    ├── announcements/                 # list + detail + mark read
+    └── notifications/                 # inbox + mark all read
 ```
 
 Each feature is split into `data/` (repositories, API clients, local cache),
 `domain/` (entities + use cases) and `presentation/` (screens + widgets).
 
-## Localization
+## Key behaviors
 
-- `lib/l10n/app_ar.arb` — Arabic (primary)
-- `lib/l10n/app_en.arb` — English (fallback, Phase 2)
-- Generated to `lib/l10n/gen/` via `flutter gen-l10n` (runs automatically on build).
+- **RTL first**: `Directionality(textDirection: TextDirection.rtl)` wraps the whole app, regardless of system locale (brief §1 rule 4).
+- **Arabic-only UI**: all strings come from `lib/l10n/app_ar.arb` — none hardcoded in Dart.
+- **Stale-while-revalidate**: every list/timetable read returns the Drift cache instantly, then refreshes from the server in the background. On failure (offline), the cache is kept.
+- **Auto token refresh**: a Dio interceptor catches 401, calls `/auth/refresh`, retries the original request exactly once, then clears storage on second 401.
+- **Device binding**: the first login binds the device fingerprint to the account; a different device triggers `DEVICE_LIMIT_EXCEEDED` and the student sees an Arabic message prompting them to contact their department.
+- **First-login password change**: if `must_change_password=true`, the router redirects to `/change-password` after login and the back button is disabled.
+- **Timezone**: Asia/Baghdad (UTC+3, no DST). Date strings from the API (ISO-8601 UTC) are converted on display.
 
 ## Status
 
-Phase 0 — scaffold complete. Phase 3 (Flutter core) builds on top of this tree.
+- Phase 0: scaffold ✅
+- Phase 3: core ✅ — auth, home, timetable, announcements, notifications, offline cache
+- Phase 4 (attendance QR) — pending
+- Phase 5 (FCM pipeline + deep links + scheduled local reminders) — pending
+- Phase 6 (hardening + pilot build) — pending
+
+## Test
+
+```bash
+flutter test
+```
+
+A smoke test covers widget instantiation + parsing of timetable JSON.

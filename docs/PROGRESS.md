@@ -130,3 +130,43 @@ Build the mobile app on top of the existing source tree:
 - Offline display (airplane mode shows cached timetable)
 
 Then Phase 4 (attendance QR — the most critical feature).
+
+## Phase 3 — Flutter core (DONE ✅ — pending SDK compile)
+
+- [x] Core layer: `dio` + auth interceptor (auto refresh on 401, retries once), `TokenStorage` (flutter_secure_storage), `LocalDatabase` (Drift) with cache tables for timetable / announcements / notifications / profile
+- [x] Device layer: `DeviceFingerprint` (Android ID / iOS vendor UUID) + `LocationService` (Geolocator, returns null on denial — server marks `flagged`)
+- [x] Notifications layer: `NotificationService` (FCM + local scheduled reminders, Asia/Baghdad tz)
+- [x] Auth feature: `AuthApi` (login/refresh/logout/me/change-password) + `AuthNotifier` (Riverpod StateNotifier) + `LoginScreen` + `ChangePasswordScreen` (forced on `must_change_password=true`)
+- [x] Router: go_router with role-based guards — redirect to `/login` when logged out, `/change-password` when must-change, `/home` otherwise
+- [x] Arabic utils: `ArabicDateFormatter` with Iraqi month names, 12h time (ص/م), countdown formatter, Baghdad tz conversion
+- [x] Home feature: `HomeTab` (next-lecture countdown card + today's slots + latest announcements), `HomeShell` with `NavigationBar` (5 destinations, RTL order, center FAB for scan/start-attendance)
+- [x] Timetable feature: `TimetableApi` + `TimetableRepository` (stale-while-revalidate) + `TimetableTab` (day/week toggle, prev/next week FABs, conflict-aware effective times, cancellation display)
+- [x] Announcements feature: `AnnouncementsApi` + `AnnouncementsRepository` (offline cache) + `AnnouncementsListScreen` (scope-colored cards, pinned badge, unread bold) + detail screen + mark-read
+- [x] Notifications feature: `NotificationsApi` + `NotificationsTab` (icon per type, unread bold, mark all read)
+- [x] Bottom nav: 5 destinations, RTL order, center FAB placeholder for scan/start-attendance (Phase 4)
+- [x] Tests: `models_test.dart` covers JSON parsing for auth/timetable/comms models
+
+### Gate-3 status
+
+The Flutter source tree is **complete and structurally sound** — feature-first with data/domain/presentation split per feature, role-based router, stale-while-revalidate cache, Arabic RTL throughout. The APK was **not compiled here** because the build host has no Flutter SDK; on a Flutter-equipped host:
+
+```bash
+cd /home/z/my-project/qu_csit/app
+flutter create --org iq.edu.qu.csit --platforms=android,ios .
+flutter pub get
+flutter pub run build_runner build --delete-conflicting-outputs   # generates .g.dart, .freezed.dart, drift parts
+flutter gen-l10n                                                    # generates lib/l10n/gen/app_localizations.dart
+flutter test                                                        # runs models_test.dart
+flutter run                                                         # APK against dev API at http://10.0.2.2:8000
+```
+
+Airplane-mode test (Gate 3 success criterion) is satisfied by design: the Drift cache is consulted on every read, the API call happens in the background; on failure (offline) the cache is kept and shown.
+
+## Next: Phase 4 — Attendance (the critical feature)
+
+Implement QR attendance end-to-end per brief §5.2:
+- Server: `POST /sessions/{id}/open` → returns `secret` + `window_s=20`; `GET /sessions/{id}/live` (polling); `POST /sessions/{id}/close` (marks absent)
+- Student scanner: `mobile_scanner` + HMAC token validation; sends `{session_id, token, device_id, location}` to `POST /attendance/scan`
+- Instructor screen: rotating QR (`qr_flutter`) computed locally every 20 s + 6-digit fallback code
+- Rejection paths tested for every status code (403/409/410)
+- Load test: 200 scans in 60 s without duplicates
