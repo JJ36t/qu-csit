@@ -1,0 +1,26 @@
+# Ruff — fast linter/formatter
+target-version = "py312"
+line-length = 100
+
+[lint]
+select = [
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # pyflakes
+  "I",   # isort
+  "B",   # flake8-bugbear
+  "UP",  # pyupgrade
+  "SIM", # flake8-simplify
+  "C4",  # comprehensions
+]
+ignore = [
+  "E501",  # line too long (handled by formatter)
+  "B008",  # function call in default arg (FastAPI Depends)
+]
+
+[lint.per-file-ignores]
+"tests/*" = ["B011"]
+"migrations/*" = ["E402"]
+
+[format]
+quote-style = "double"

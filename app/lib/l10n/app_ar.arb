@@ -1,0 +1,74 @@
+{
+  "@@locale": "ar",
+  "appTitle": "كلية علوم الحاسوب – القادسية",
+  "@appTitle": { "description": "App display name" },
+
+  "navHome": "الرئيسية",
+  "navTimetable": "الجدول",
+  "navScan": "مسح",
+  "navMaterials": "المواد",
+  "navMore": "المزيد",
+
+  "loginTitle": "تسجيل الدخول",
+  "loginUniversityId": "الرقم الجامعي",
+  "loginPassword": "كلمة المرور",
+  "loginSubmit": "دخول",
+  "loginError": "رقم الجامعي أو كلمة المرور غير صحيح",
+  "loginRateLimited": "محاولات كثيرة جداً، انتظر قليلاً",
+
+  "changePasswordTitle": "تغيير كلمة المرور",
+  "changePasswordOld": "كلمة المرور الحالية",
+  "changePasswordNew": "كلمة المرور الجديدة",
+  "changePasswordConfirm": "تأكيد كلمة المرور",
+  "changePasswordMismatch": "كلمتا المرور غير متطابقتين",
+  "changePasswordWeak": "كلمة المرور ضعيفة (8 محارف، أرقام وحروف)",
+  "changePasswordSubmit": "حفظ",
+
+  "homeNextLecture": "المحاضرة القادمة",
+  "homeTodayLectures": "محاضرات اليوم",
+  "homeAttendanceRate": "نسبة الحضور",
+  "homeLatestAnnouncements": "آخر الإعلانات",
+  "homeNoLecturesToday": "لا محاضرات اليوم",
+
+  "timetableDay": "يوم",
+  "timetableWeek": "أسبوع",
+  "timetableRoom": "القاعة",
+  "timetableTheory": "نظري",
+  "timetableLab": "مختبر",
+  "timetableChanged": "تم تعديل الحصة",
+
+  "attendanceScanTitle": "مسح الحضور",
+  "attendanceScanPrompt": "وجّه الكاميرا إلى رمز التدريسي",
+  "attendanceSuccess": "تم تسجيل حضورك",
+  "attendanceLate": "تم تسجيلك كمتأخر",
+  "attendanceFlagged": "تم تسجيلك للمراجعة (الموقع)",
+  "attendanceAlready": "سُجّل حضورك مسبقاً",
+  "attendanceInvalid": "رمز غير صالح أو منتهي",
+  "attendanceNotEnrolled": "أنت غير مسجّل في هذه المادة",
+  "attendanceDeviceRejected": "هذا الجهاز غير مرتبط بحسابك",
+
+  "materialsTitle": "موادي",
+  "materialsWeek": "الأسبوع",
+  "materialsDownload": "تحميل",
+  "materialsOpen": "فتح",
+
+  "announcementsTitle": "الإعلانات",
+  "announcementsCollege": "كلية",
+  "announcementsDepartment": "قسم",
+  "announcementsCourse": "مادة",
+  "announcementsPinned": "مثبّت",
+
+  "notificationsTitle": "الإشعارات",
+  "notificationsMarkAllRead": "تعليم الكل كمقروء",
+  "notificationsEmpty": "لا إشعارات",
+
+  "moreProfile": "الملف الشخصي",
+  "moreSettings": "الإعدادات",
+  "moreLogout": "تسجيل الخروج",
+
+  "errorGeneric": "حدث خطأ، حاول لاحقاً",
+  "errorOffline": "لا يوجد اتصال، عرض البيانات المخزّنة",
+  "errorEmpty": "لا توجد بيانات",
+  "loading": "جارٍ التحميل…",
+  "retry": "إعادة المحاولة"
+}

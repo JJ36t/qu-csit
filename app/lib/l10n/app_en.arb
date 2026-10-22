@@ -1,0 +1,72 @@
+{
+  "@@locale": "en",
+  "appTitle": "QU CSIT",
+  "navHome": "Home",
+  "navTimetable": "Timetable",
+  "navScan": "Scan",
+  "navMaterials": "Materials",
+  "navMore": "More",
+
+  "loginTitle": "Sign in",
+  "loginUniversityId": "University ID",
+  "loginPassword": "Password",
+  "loginSubmit": "Sign in",
+  "loginError": "Invalid university ID or password",
+  "loginRateLimited": "Too many attempts, please wait",
+
+  "changePasswordTitle": "Change password",
+  "changePasswordOld": "Current password",
+  "changePasswordNew": "New password",
+  "changePasswordConfirm": "Confirm password",
+  "changePasswordMismatch": "Passwords do not match",
+  "changePasswordWeak": "Weak password (8+ chars, letters and digits)",
+  "changePasswordSubmit": "Save",
+
+  "homeNextLecture": "Next lecture",
+  "homeTodayLectures": "Today's lectures",
+  "homeAttendanceRate": "Attendance rate",
+  "homeLatestAnnouncements": "Latest announcements",
+  "homeNoLecturesToday": "No lectures today",
+
+  "timetableDay": "Day",
+  "timetableWeek": "Week",
+  "timetableRoom": "Room",
+  "timetableTheory": "Theory",
+  "timetableLab": "Lab",
+  "timetableChanged": "Slot changed",
+
+  "attendanceScanTitle": "Scan attendance",
+  "attendanceScanPrompt": "Point the camera at the instructor's QR",
+  "attendanceSuccess": "Attendance recorded",
+  "attendanceLate": "Marked as late",
+  "attendanceFlagged": "Flagged for review (location)",
+  "attendanceAlready": "Already recorded",
+  "attendanceInvalid": "Invalid or expired code",
+  "attendanceNotEnrolled": "Not enrolled in this course",
+  "attendanceDeviceRejected": "Device not bound to your account",
+
+  "materialsTitle": "My materials",
+  "materialsWeek": "Week",
+  "materialsDownload": "Download",
+  "materialsOpen": "Open",
+
+  "announcementsTitle": "Announcements",
+  "announcementsCollege": "College",
+  "announcementsDepartment": "Department",
+  "announcementsCourse": "Course",
+  "announcementsPinned": "Pinned",
+
+  "notificationsTitle": "Notifications",
+  "notificationsMarkAllRead": "Mark all as read",
+  "notificationsEmpty": "No notifications",
+
+  "moreProfile": "Profile",
+  "moreSettings": "Settings",
+  "moreLogout": "Sign out",
+
+  "errorGeneric": "Something went wrong",
+  "errorOffline": "Offline — showing cached data",
+  "errorEmpty": "Nothing here yet",
+  "loading": "Loading…",
+  "retry": "Retry"
+}

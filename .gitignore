@@ -1,0 +1,49 @@
+# OS/editor noise
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+*.bak
+
+# Secrets — NEVER commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+firebase-credentials*.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+*.db
+*.db-*
+storage/
+
+# Node
+node_modules/
+dist/
+.npm/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+build/
+.pub-cache/
+.pub-lockignore
+ios/Pods/
+android/.gradle/
+android/local.properties
+
+# Docker volumes (data)
+pg_data/
+redis_data/
+dev.db test.db .venv node_modules dist storage/

@@ -1,0 +1,26 @@
+# Caddy reverse proxy — automatic HTTPS via Let's Encrypt.
+# Replace the host placeholder before deploying to prod.
+
+{$DOMAIN:csit.local} {
+    encode gzip zstd
+
+    # API
+    handle /api/* {
+        reverse_proxy api:8000
+    }
+    handle /docs { reverse_proxy api:8000 }
+    handle /openapi.json { reverse_proxy api:8000 }
+    handle /health { reverse_proxy api:8000 }
+
+    # Admin panel (statically built, served by Caddy from the admin image's volume)
+    handle {
+        reverse_proxy admin:80
+    }
+
+    header {
+        Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "no-referrer"
+    }
+}
