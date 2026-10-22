@@ -17,6 +17,7 @@ def _wire():
         ("timetable", "/timetable", ["timetable"]),
         ("announcements", "/announcements", ["announcements"]),
         ("attendance", "", ["attendance"]),  # routes mounted at root: /sessions/..., /attendance/...
+        ("materials", "", ["materials"]),  # /offerings/{id}/materials, /materials/{id}, /files/{id}/download
     ]:
         try:
             mod = __import__(f"app.api.v1.endpoints.{module_name}", fromlist=["router"])

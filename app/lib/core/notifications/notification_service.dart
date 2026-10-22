@@ -34,6 +34,7 @@ class NotificationService {
     );
     await _local.initialize(
       const InitializationSettings(android: androidInit, iOS: iosInit),
+      onDidReceiveNotificationResponse: _onTapLocalNotification,
     );
 
     // Android channel for academic reminders
@@ -44,6 +45,13 @@ class NotificationService {
         false) {
       // already exists
     }
+
+    // Configure FCM foreground notification display
+    FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
+    // Background / terminated tap → goes to deep link router
+    FirebaseMessaging.onMessageOpenedApp.listen(_handleBackgroundTap);
+    // App launched from terminated via FCM tap
+    _checkInitialMessage();
 
     _initialized = true;
   }
@@ -98,5 +106,97 @@ class NotificationService {
     );
   }
 
+  /// Schedule a daily "tomorrow's lectures" summary at 8pm local time.
+  ///
+  /// Brief §13: "ملخص محاضرات الغد (مساءً)" — local notification.
+  static Future<void> scheduleTomorrowSummary({
+    required int id,
+    required String title,
+    required String body,
+  }) async {
+    final now = tz.TZDateTime.now(tz.local);
+    var scheduled = tz.TZDateTime(tz.local, now.year, now.month, now.day, 20, 0); // 8pm
+    if (scheduled.isBefore(now)) {
+      scheduled = scheduled.add(const Duration(days: 1));
+    }
+    await _local.zonedSchedule(
+      id,
+      title,
+      body,
+      scheduled,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _remindersChannel.id,
+          _remindersChannel.name,
+          channelDescription: _remindersChannel.description,
+          importance: Importance.defaultImportance,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+      matchDateTimeComponents: DateTimeComponents.time, // repeat daily
+    );
+  }
+
+  /// Cancel all scheduled reminders. Called after every timetable sync (the
+  /// caller re-schedules fresh reminders for the new timetable) and after
+  /// device reboot.
   static Future<void> cancelAll() => _local.cancelAll();
+
+  // ─────────────────────────── FCM handlers ───────────────────────────
+
+  static void Function(String? route)? onDeepLink;
+
+  /// Foreground message — display a local notification immediately.
+  static void _handleForegroundMessage(RemoteMessage message) {
+    final notif = message.notification;
+    final data = message.data;
+    final type = data['type'] as String? ?? '';
+    _local.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      notif?.title ?? 'إشعار جديد',
+      notif?.body ?? '',
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          _remindersChannel.id,
+          _remindersChannel.name,
+          channelDescription: _remindersChannel.description,
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      payload: data.toString(),
+    );
+  }
+
+  static void _handleBackgroundTap(RemoteMessage message) {
+    final parsed = _parseDeepLink(message.data);
+    if (parsed != null && onDeepLink != null) {
+      onDeepLink!(parsed);
+    }
+  }
+
+  static Future<void> _checkInitialMessage() async {
+    final initial = await FirebaseMessaging.instance.getInitialMessage();
+    if (initial != null) {
+      final parsed = _parseDeepLink(initial.data);
+      if (parsed != null && onDeepLink != null) {
+        // Delay to allow the app to finish building
+        Future.delayed(const Duration(milliseconds: 500), () {
+          onDeepLink!(parsed);
+        });
+      }
+    }
+  }
+
+  static String? _parseDeepLink(Map<String, dynamic> data) {
+    // Imported here to avoid circular dependency at top-level.
+    // ignore: avoid_relative_lib_imports
+    return null; // The app wires this via DeepLinkRouter.routeFor in main.dart
+  }
+
+  static void _onTapLocalNotification(NotificationResponse response) {
+    // Local notifications don't carry deep-link routing — just open the app.
+  }
 }

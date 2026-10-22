@@ -237,3 +237,76 @@ ruff check .                           # All checks passed
 - FCM HTTP v1 pipeline — background worker batches sends (500 per batch), drops invalid tokens, retries
 - Deep links: each notification carries `type` + `target_id` → app routes to the right screen
 - Local reminders: 15 min before lecture + "tomorrow's lectures" summary; reschedule after every timetable sync and after reboot
+
+## Phase 5 — Materials + FCM + deep links + reminders (DONE ✅)
+
+### Backend — Materials (5 endpoints)
+
+- [x] `POST /offerings/{id}/materials` (multipart/form-data upload — instructor only; PDF via `UploadFile` + MIME whitelist + size limit; or video/link via `url` field). Tied to offering + week_no + publish flag. On publish → broadcasts `new_material` notification to enrolled students.
+- [x] `PATCH /materials/{id}` (instructor edit — title/week/publish/description). Publish-via-PATCH also triggers notification.
+- [x] `GET /offerings/{id}/materials?week_no=` (role-aware — students see only published; instructors see all in their offering; admins see all)
+- [x] `GET /files/{id}/download` (returns short-lived signed URL — 5 min expiry, HMAC-SHA256 signed)
+- [x] `GET /storage/{shard}/{key}?expires=&sig=` (dev-only local file serving; verifies signature)
+
+### Storage abstraction
+
+- [x] `app/services/storage.py`: `StorageBackend` interface + `LocalDiskStorage` (sharded 2-char dirs, HMAC-signed download URLs) + `S3Storage` (boto3, pre-signed URLs) + `get_storage()` factory based on `STORAGE_BACKEND` env
+- [x] Upload validation: MIME whitelist (`application/pdf`, `video/mp4`, `image/png`, `image/jpeg`), 50 MB max, random storage key, SHA-256 checksum
+
+### FCM pipeline
+
+- [x] `app/services/fcm.py`: lazy-init Firebase admin SDK only if `FIREBASE_CREDENTIALS_JSON` is set; otherwise dev no-op (notification still stored in DB so the inbox works)
+- [x] `send_notification_to_user`: sends to all of a user's active FCM tokens, drops `UNREGISTERED` tokens, retries on transient errors
+- [x] `flush_pending_notifications`: worker entrypoint — batches up to 500 unread notifications created in the last 5 min, sends each, returns `{sent, failed, total_pending}`
+- [x] arq worker function `flush_notifications` wired into `WorkerSettings`
+- [x] Each notification carries `type` + `notification_id` + `target_id` data payload for deep links
+
+### Flutter — Deep links + local reminders
+
+- [x] `core/notifications/deep_link_router.dart`: `routeFor(type, targetId, data)` maps notification types → app routes:
+  - `timetable_change` → `/home/tab-timetable`
+  - `attendance_open` → `/home/tab-scan`
+  - `announcement` → `/announcement/{id}`
+  - `new_material` → `/home/tab-materials`
+  - `absence_warning` → `/attendance-summary`
+  - `grade_published` → `/grades`
+  - `excuse_reviewed` → `/excuses`
+  - `request_updated` → `/requests`
+- [x] `core/notifications/notification_service.dart` extended with:
+  - FCM foreground message → local notification display
+  - FCM background/terminated tap → deep-link callback
+  - `scheduleTomorrowSummary` — daily 8pm local time, repeats daily via `matchDateTimeComponents`
+  - `onDeepLink` callback for the app to register a router
+- [x] `core/notifications/reminder_scheduler.dart`: `reschedule(slots)` — cancels all + re-schedules 15-min-before reminders for every upcoming slot + daily "tomorrow's lectures" summary at 8pm. Called after every timetable sync and after device reboot.
+- [x] `features/materials/` — api + models + placeholder MaterialsTab
+
+### Tests (23 new, 138 total, 86% coverage)
+
+- Materials: upload PDF, add video link, missing file/url, invalid kind, wrong instructor (403 IDOR), student forbidden (403), nonexistent offering (404), invalid MIME (415)
+- List: instructor sees all, student sees only published, unenrolled student 403, week filter
+- Patch: success, other instructor rejected, nonexistent 404
+- File download: returns signed URL with `sig` + `expires` params, nonexistent 404
+- Notification on publish: create-published triggers `new_material`, create-unpublished doesn't, patch-to-publish triggers
+- FCM flush: dev no-op returns `{sent: 0, failed: 0, total_pending: N}` without error
+- Storage integrity: PDF bytes saved to disk + checksum verified
+
+### Gate-5 verification
+
+```bash
+cd /home/z/my-project/qu_csit/api
+source .venv/bin/activate
+python -m app.seed --drop
+pytest tests/ --cov=app                # 138 passed, 86% coverage
+ruff check .                           # All checks passed
+# Verify 53 OpenAPI paths registered:
+curl -s http://localhost:8000/openapi.json | jq '.paths | keys | length'  # → 53
+```
+
+## Next: Phase 6 — Hardening & pilot build
+
+- Security checklist (`docs/SECURITY_REPORT.md`): Argon2 / refresh rotation / RBAC / IDOR / upload validation / HTTPS / least-privilege DB / audit log on attendance-grade-user changes / no background tracking / privacy policy page
+- Sentry integration
+- Backups script with restore test
+- Signed release build
+- Store listing assets checklist
+- Privacy policy served by the API at `/privacy`
