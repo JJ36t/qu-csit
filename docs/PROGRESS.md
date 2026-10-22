@@ -87,3 +87,46 @@ Endpoints to build (brief §6):
 - Scheduled session generation (background job generates `lecture_sessions` for each slot weekly)
 
 Admin panel pages: academic years/terms, groups, courses & offerings, timetable editor with live conflict warnings, announcements composer.
+
+## Phase 2 — Timetable & announcements API + admin panel (DONE ✅)
+
+- [x] `GET /timetable?from=&to=` — student sees enrolled offerings, instructor sees own, admin sees all; grouped by date with effective_start/end/is_cancelled
+- [x] `GET /timetable/changes` — dated exceptions affecting the caller
+- [x] Admin slot CRUD: `POST /admin/timetable`, `PATCH /admin/timetable/{id}`, `DELETE /admin/timetable/{id}`
+- [x] Conflict detection (instructor / room / group overlap on same weekday + overlapping time) — returns 409 with SLOT_CONFLICT_* code
+- [x] `POST /admin/timetable/changes` (cancel/move/extra) + broadcasts notification to enrolled students + instructor
+- [x] Background session generation: `POST /admin/terms/{id}/generate-sessions` creates `lecture_sessions` for every slot × every week of the term (idempotent)
+- [x] `GET /announcements` (filtered by caller role/group/stage/department/offerings) + `POST /announcements` with scope validation + read tracking
+- [x] `POST /announcements/{id}/read` (creates `announcement_reads` row, idempotent)
+- [x] `GET /public/news` (no auth, college-scope only)
+- [x] `GET /notifications?unread_only=`, `POST /notifications/read-all`, `POST /notifications/{id}/read`
+- [x] Academic admin endpoints: departments, academic years, terms (with `generate-sessions`), groups, courses, offerings, audit logs (scoped per role)
+- [x] **GATE 2:** pytest green — 90 tests, 88% coverage. Conflict detection + IDOR + scope tests all pass.
+- [x] Admin panel pages: DashboardPage (live /health), AcademicStructurePage (years/terms/depts/groups/courses/offerings CRUD), TimetablePage (slot CRUD with conflict feedback), AnnouncementsPage (composer with scope picker), StudentsImportPage (Excel upload + preview + commit), AbsenceRulesPage (per-term absence rules)
+
+### Gate-2 verification
+
+```bash
+cd /home/z/my-project/qu_csit/api
+source .venv/bin/activate
+python -m app.seed --drop
+uvicorn app.main:app --reload          # http://localhost:8000/docs — 34 paths
+pytest tests/ --cov=app                # 90 passed, 88% coverage
+ruff check .                           # All checks passed
+
+# admin panel
+cd ../admin && npm run build           # builds cleanly (1.3MB JS bundle)
+```
+
+## Next: Phase 3 — Flutter core
+
+Build the mobile app on top of the existing source tree:
+- Theme + RTL + Cairo font (already scaffolded)
+- Auth flow: login → first-login password change → device binding → /auth/me
+- Home (next lecture countdown, today's slots, attendance %, latest announcements)
+- Timetable (day + week views, fetched from /timetable)
+- Announcements (list + detail + mark read)
+- Local Drift cache (stale-while-revalidate)
+- Offline display (airplane mode shows cached timetable)
+
+Then Phase 4 (attendance QR — the most critical feature).

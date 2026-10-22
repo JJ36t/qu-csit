@@ -6,36 +6,47 @@ from fastapi import APIRouter
 api_router = APIRouter()
 
 
-# Routers are included lazily so the app still boots even before all
-# feature routers exist. Phase 0 only wires auth (stub) so /health works
-# in isolation during scaffold.
 def _wire():
+    import logging
+
+    log = logging.getLogger("app")
+
+    for module_name, prefix, tags in [
+        ("auth", "/auth", ["auth"]),
+        ("meta", "", ["meta"]),
+        ("timetable", "/timetable", ["timetable"]),
+        ("announcements", "/announcements", ["announcements"]),
+    ]:
+        try:
+            mod = __import__(f"app.api.v1.endpoints.{module_name}", fromlist=["router"])
+            api_router.include_router(mod.router, prefix=prefix, tags=tags)
+        except Exception as exc:  # pragma: no cover
+            log.warning("%s router not wired: %s", module_name, exc)
+
+    # announcements.py also has public_router (no auth) and notifications_router
     try:
-        from app.api.v1.endpoints import auth
-
-        api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
+        from app.api.v1.endpoints.announcements import public_router, notifications_router
+        api_router.include_router(public_router, prefix="/public", tags=["public"])
+        api_router.include_router(notifications_router, prefix="/notifications", tags=["notifications"])
     except Exception as exc:  # pragma: no cover
-        import logging
+        log.warning("public/notifications router not wired: %s", exc)
 
-        logging.getLogger("app").warning("auth router not wired: %s", exc)
-
+    # admin routers — split across modules
     try:
-        from app.api.v1.endpoints import admin
-
-        api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
+        from app.api.v1.endpoints.timetable import admin_router as timetable_admin_router
+        api_router.include_router(timetable_admin_router, prefix="/admin/timetable", tags=["admin"])
     except Exception as exc:  # pragma: no cover
-        import logging
+        log.warning("admin/timetable router not wired: %s", exc)
 
-        logging.getLogger("app").warning("admin router not wired: %s", exc)
-
-    try:
-        from app.api.v1.endpoints import meta
-
-        api_router.include_router(meta.router, tags=["meta"])
-    except Exception as exc:  # pragma: no cover
-        import logging
-
-        logging.getLogger("app").warning("meta router not wired: %s", exc)
+    for module_name, prefix in [
+        ("admin", "/admin"),
+        ("academic_admin", "/admin"),
+    ]:
+        try:
+            mod = __import__(f"app.api.v1.endpoints.{module_name}", fromlist=["router"])
+            api_router.include_router(mod.router, prefix=prefix, tags=["admin"])
+        except Exception as exc:  # pragma: no cover
+            log.warning("%s router not wired: %s", module_name, exc)
 
 
 _wire()

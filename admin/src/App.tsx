@@ -3,6 +3,11 @@ import { Layout } from "antd";
 import AppHeader from "./components/AppHeader";
 import AppSidebar from "./components/AppSidebar";
 import DashboardPage from "./pages/DashboardPage";
+import AcademicStructurePage from "./pages/AcademicStructurePage";
+import TimetablePage from "./pages/TimetablePage";
+import AnnouncementsPage from "./pages/AnnouncementsPage";
+import StudentsImportPage from "./pages/StudentsImportPage";
+import AbsenceRulesPage from "./pages/AbsenceRulesPage";
 import PlaceholderPage from "./pages/PlaceholderPage";
 
 const { Content } = Layout;
@@ -17,30 +22,11 @@ export default function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/dashboard" replace />} />
             <Route path="/dashboard" element={<DashboardPage />} />
-            <Route
-              path="/academic-years"
-              element={<PlaceholderPage title="السنوات الدراسية والكورسات" phase="Phase 2" />}
-            />
-            <Route
-              path="/groups"
-              element={<PlaceholderPage title="الشعب" phase="Phase 2" />}
-            />
-            <Route
-              path="/offerings"
-              element={<PlaceholderPage title="تدريس المواد" phase="Phase 2" />}
-            />
-            <Route
-              path="/timetable"
-              element={<PlaceholderPage title="الجدول" phase="Phase 2" />}
-            />
-            <Route
-              path="/students"
-              element={<PlaceholderPage title="استيراد الطلاب" phase="Phase 1" />}
-            />
-            <Route
-              path="/announcements"
-              element={<PlaceholderPage title="الإعلانات" phase="Phase 2" />}
-            />
+            <Route path="/academic" element={<AcademicStructurePage />} />
+            <Route path="/timetable" element={<TimetablePage />} />
+            <Route path="/students" element={<StudentsImportPage />} />
+            <Route path="/announcements" element={<AnnouncementsPage />} />
+            <Route path="/absence-rules" element={<AbsenceRulesPage />} />
             <Route path="*" element={<PlaceholderPage title="غير موجود" phase="" />} />
           </Routes>
         </Content>

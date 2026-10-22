@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import uuid
 
-from fastapi.testclient import TestClient
 
 from tests.conftest import auth_header, login, make_students_xlsx
 
@@ -238,7 +237,7 @@ def test_student_import_invalid_file_type(client, dept_admin_cs_token):
 def test_reset_password_dept_admin_in_scope(client, dept_admin_cs_token, db):
     """CS dept_admin can reset a CS student's password."""
     from sqlalchemy import select
-    from app.models import User, UserRole
+    from app.models import User
 
     student = db.scalar(select(User).where(User.university_id == "S1001"))
     r = client.post(
