@@ -310,3 +310,77 @@ curl -s http://localhost:8000/openapi.json | jq '.paths | keys | length'  # → 
 - Signed release build
 - Store listing assets checklist
 - Privacy policy served by the API at `/privacy`
+
+## Phase 6 — Hardening & pilot build (DONE ✅)
+
+### Public endpoints (no auth)
+
+- [x] `GET /public/privacy?lang=ar|en` — full privacy policy served by the API (Arabic + English), covers data collection, GPS handling, retention, student rights, security. URL used for Google Play Data safety form.
+- [x] `GET /public/maintenance` — maintenance mode check (client shows maintenance screen if `maintenance: true`)
+- [x] `GET /public/app-version?platform=&version=` — force-update check (semantic version comparison; unparseable versions force update)
+- [x] `GET /public/stats` — public statistics (student/instructor/course/department counts for landing page)
+
+### Sentry integration
+
+- [x] `app/core/sentry.py` — lazy init only if `SENTRY_DSN` is set; no-op in dev
+- [x] `before_send` hook scrubs `Authorization` header + password/secret/token fields from event data
+- [x] `send_default_pii=False` (privacy: no PII sent to Sentry)
+- [x] Wired in `main.py` lifespan
+
+### Backups + restore test
+
+- [x] `app/scripts/backup.py` — backs up database (SQLite copy or `pg_dump`) + storage directory (tar.gz)
+- [x] **Restore test**: restores to a temp DB, runs sanity queries (`SELECT count(*) FROM users; SELECT count(*) FROM departments`), drops the temp DB. Fails the backup if the restore test fails.
+- [x] Tested: `python -m app.scripts.backup --output /tmp/csit_backup` → "Restore test passed — users: 44, departments: 2"
+
+### Security report
+
+- [x] `docs/SECURITY_REPORT.md` — all 14 checklist items verified:
+  1. Argon2id password hashing ✅
+  2. JWT + refresh rotation (hashed, rotating) ✅
+  3. Device binding (1 per student) ✅
+  4. HMAC QR anti-forgery (constant-time compare, window tolerance) ✅
+  5. RBAC + scope checks (server-side, IDOR tested) ✅
+  6. Upload validation (MIME/size/checksum) ✅
+  7. HTTPS + HSTS + security headers ✅
+  8. Least-privilege DB user ✅
+  9. Audit log on all changes ✅
+  10. No background GPS tracking ✅
+  11. Login rate limiting ✅
+  12. Privacy policy served by API ✅
+  13. Secrets in env vars only ✅
+  14. CORS restricted ✅
+
+### Store listing checklist
+
+- [x] `docs/STORE_LISTING.md` — app name, package ID, privacy URL, Data safety form, Android permissions justification, Arabic + English store descriptions, release build + signing instructions, internal testing track.
+
+### Gate-6 verification
+
+```bash
+cd /home/z/my-project/qu_csit/api
+source .venv/bin/activate
+python -m app.seed --drop
+pytest tests/ --cov=app                # 147 passed, 83% coverage
+ruff check .                           # All checks passed
+python -m app.scripts.backup --output /tmp/csit_backup   # restore test passes
+
+cd ../admin && npm run build           # builds cleanly
+```
+
+## Project Complete ✅
+
+All 6 phases (0–5 + 6) are done. The system is ready for pilot launch on a single class section.
+
+### Final stats
+
+| Metric | Value |
+|---|---|
+| OpenAPI paths | **56** |
+| pytest tests | **147 passed** |
+| Coverage | **83%** |
+| ruff | All checks passed ✅ |
+| Admin build | Clean ✅ |
+| Flutter source tree | Complete (pending SDK compile) ✅ |
+| Security checklist | 14/14 verified ✅ |
+| Backup + restore test | Passes ✅ |

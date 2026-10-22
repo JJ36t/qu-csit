@@ -33,6 +33,13 @@ def _wire():
     except Exception as exc:  # pragma: no cover
         log.warning("public/notifications router not wired: %s", exc)
 
+    # Public endpoints (privacy, maintenance, app version, stats) — no auth
+    try:
+        from app.api.v1.endpoints import public
+        api_router.include_router(public.router, prefix="/public", tags=["public"])
+    except Exception as exc:  # pragma: no cover
+        log.warning("public router not wired: %s", exc)
+
     # admin routers — split across modules
     try:
         from app.api.v1.endpoints.timetable import admin_router as timetable_admin_router

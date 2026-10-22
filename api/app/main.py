@@ -22,6 +22,9 @@ logging.basicConfig(
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info("Starting %s (%s)", settings.app_name, settings.app_env)
+    # Initialize Sentry (no-op in dev unless SENTRY_DSN is set)
+    from app.core.sentry import init_sentry
+    init_sentry()
     yield
     logger.info("Shutting down %s", settings.app_name)
 
