@@ -170,3 +170,70 @@ Implement QR attendance end-to-end per brief §5.2:
 - Instructor screen: rotating QR (`qr_flutter`) computed locally every 20 s + 6-digit fallback code
 - Rejection paths tested for every status code (403/409/410)
 - Load test: 200 scans in 60 s without duplicates
+
+## Phase 4 — Attendance (DONE ✅)
+
+### Backend
+
+- [x] **HMAC QR token** (`app/services/qr_token.py`): `generate_session_secret`, `compute_window_index = floor(unix/window_s)`, `compute_hmac_token` = `"session_id|window_index|HMAC_SHA256(secret, msg)"`, `compute_fallback_code` (6-digit derived from same HMAC), `verify_token` tries current + previous window using `hmac.compare_digest` (constant-time).
+- [x] **Session open** (`open_session`): verifies instructor is the offering's instructor (or admin); checks time window `[starts_at − 10min, ends_at + 30min]`; generates the per-session `secret` on first open; returns `{session_id, secret, window_s: 20, late_threshold_minutes, status: open}`.
+- [x] **Scan pipeline** (`process_scan`): strict order —
+  1. Session exists & is open (409 `SESSION_NOT_OPEN` / `SESSION_CLOSED`)
+  2. Student enrolled (403 `NOT_ENROLLED`)
+  3. Token valid for current or previous window (410 `QR_WINDOW_INVALID`)
+  4. Not already recorded (409 `ALREADY_RECORDED`)
+  5. Device matches bound device (403 `DEVICE_NOT_BOUND`)
+  6. Location check → flag (don't reject) with reason `NO_LOCATION_PROVIDED` or `OUTSIDE_ROOM_RADIUS_<dist>m`
+  7. Status: `late` if `scanned_at > starts_at + late_threshold`, else `present`.
+- [x] **Live roster** (`live_session`): `GET /sessions/{id}/live` returns present/late/absent/flagged/enrolled counts + records list (instructor polls every 5 s).
+- [x] **Close** (`close_session`): idempotent; marks every enrolled student without a record as `absent`; then `_maybe_send_absence_warnings` sends a notification to any student whose cumulative absence count for the offering reaches the term-rule threshold.
+- [x] **Manual edit** (`patch_record`): instructor can edit any record within 24h of close, reason required, audit-logged.
+- [x] **Student summary** (`student_summary`): per-offering attendance % + `is_warning` flag when at threshold.
+
+### Endpoints (8, mounted at root)
+
+- `POST /sessions/{id}/open`
+- `POST /sessions/{id}/close`
+- `GET /sessions/{id}/live`
+- `POST /attendance/scan`
+- `PATCH /attendance/{id}`
+- `GET /attendance/summary` (student only)
+- `GET /offerings/{id}/attendance/report` (instructor)
+
+### Flutter (scaffold)
+
+- [x] `student_scanner_screen.dart` — `mobile_scanner` camera + scan overlay + result card (green=present, orange=flagged, red=rejection) + torch/camera switch + retry button. Reads QR, parses `session_id|window_index|sig`, posts to `/attendance/scan` with device fingerprint + location.
+- [x] `instructor_qr_screen.dart` — `qr_flutter` display, recomputed every `window_s` seconds locally; countdown ring; 6-digit fallback code; live counts polled every 5 s; close-session confirmation dialog.
+- [x] `attendance_api.dart` + `session_models.dart` (freezed).
+
+### Tests (25 new, 115 total)
+
+Every rejection path covered:
+- 200: present / late / flagged (recorded)
+- 400: OUTSIDE_ATTENDANCE_WINDOW (open a session in the past)
+- 403: NOT_SESSION_INSTRUCTOR / NOT_ENROLLED / DEVICE_NOT_BOUND / ROLE_NOT_ALLOWED (instructor trying to scan)
+- 409: SESSION_NOT_OPEN / SESSION_CLOSED / ALREADY_RECORDED
+- 410: QR_WINDOW_INVALID (token from 5 windows ago)
+- IDOR: Instructor A cannot edit Instructor B's records; Instructor A cannot view Instructor B's offering report
+- Load test: 50 students × 4 scans = 200 requests in < 60s; 50 succeed, 150 rejected as `ALREADY_RECORDED`; no duplicate records in DB
+- Absence warning: 11 sessions with student absent → notification triggered when student's cumulative count reaches the term-rule threshold (10)
+
+### Gate-4 verification
+
+```bash
+cd /home/z/my-project/qu_csit/api
+source .venv/bin/activate
+python -m app.seed --drop
+pytest tests/ --cov=app                # 115 passed, 87% coverage
+pytest tests/test_attendance.py::test_load_200_scans_in_60s_no_duplicates  # passes
+ruff check .                           # All checks passed
+```
+
+## Next: Phase 5 — Materials + FCM + deep links + scheduled local reminders
+
+- `POST /offerings/{id}/materials` (upload PDF or add a video link, tied to offering + week)
+- `GET /offerings/{id}/materials` (student lists materials)
+- `GET /files/{id}/download` (short-lived signed URL)
+- FCM HTTP v1 pipeline — background worker batches sends (500 per batch), drops invalid tokens, retries
+- Deep links: each notification carries `type` + `target_id` → app routes to the right screen
+- Local reminders: 15 min before lecture + "tomorrow's lectures" summary; reschedule after every timetable sync and after reboot

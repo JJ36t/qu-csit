@@ -148,3 +148,7 @@ void main() {
     });
   });
 }
+
+// Note: attendance models live in features/attendance/data/session_models.dart
+// and require the same build_runner codegen. Tests for those land once the
+// Flutter SDK is available on the host.
