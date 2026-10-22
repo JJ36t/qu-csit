@@ -3,7 +3,13 @@
 Thumbs.db
 *.swp
 .idea/
-.vscode/
+# VS Code — keep shared configs (settings/launch/tasks), ignore personal
+# .vscode/settings.json is shared; *.local.json files are personal
+.vscode/*
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/extensions.json
 *.bak
 
 # Secrets — NEVER commit

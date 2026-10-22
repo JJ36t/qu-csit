@@ -1,0 +1,121 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "API: uvicorn (debug)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "uvicorn",
+      "args": ["app.main:app", "--reload", "--port", "8000", "--host", "127.0.0.1"],
+      "cwd": "${workspaceFolder}/api",
+      "python": "${workspaceFolder}/api/.venv/bin/python",
+      "env": {
+        "APP_ENV": "development",
+        "DATABASE_URL": "sqlite:///./dev.db",
+        "JWT_SECRET": "dev-secret-change-me",
+        "REDIS_URL": "",
+        "APP_DEBUG": "true"
+      },
+      "console": "integratedTerminal",
+      "justMyCode": true,
+      "subProcess": true
+    },
+    {
+      "name": "API: pytest (current file)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["${file}", "-v", "--tb=short", "-s"],
+      "cwd": "${workspaceFolder}/api",
+      "python": "${workspaceFolder}/api/.venv/bin/python",
+      "env": {
+        "APP_ENV": "test",
+        "DATABASE_URL": "sqlite:///./test.db",
+        "JWT_SECRET": "test-secret-do-not-use-in-prod",
+        "REDIS_URL": ""
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "API: pytest (all)",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "pytest",
+      "args": ["tests/", "-v", "--tb=short", "--cov=app"],
+      "cwd": "${workspaceFolder}/api",
+      "python": "${workspaceFolder}/api/.venv/bin/python",
+      "env": {
+        "APP_ENV": "test",
+        "DATABASE_URL": "sqlite:///./test.db",
+        "JWT_SECRET": "test-secret-do-not-use-in-prod",
+        "REDIS_URL": ""
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "API: seed DB",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "app.seed",
+      "args": ["--drop"],
+      "cwd": "${workspaceFolder}/api",
+      "python": "${workspaceFolder}/api/.venv/bin/python",
+      "env": {
+        "APP_ENV": "development",
+        "DATABASE_URL": "sqlite:///./dev.db",
+        "JWT_SECRET": "dev-secret-change-me",
+        "REDIS_URL": ""
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "API: backup + restore test",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "app.scripts.backup",
+      "args": ["--output", "./backups"],
+      "cwd": "${workspaceFolder}/api",
+      "python": "${workspaceFolder}/api/.venv/bin/python",
+      "env": {
+        "APP_ENV": "development",
+        "DATABASE_URL": "sqlite:///./dev.db",
+        "JWT_SECRET": "dev-secret-change-me",
+        "REDIS_URL": ""
+      },
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Flutter: Run (debug)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/app",
+      "program": "lib/main.dart",
+      "args": ["--dart-define=API_BASE_URL=http://10.0.2.2:8000"]
+    },
+    {
+      "name": "Flutter: Run (release)",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/app",
+      "program": "lib/main.dart",
+      "flutterMode": "release",
+      "args": ["--dart-define=API_BASE_URL=http://10.0.2.2:8000"]
+    },
+    {
+      "name": "Flutter: Run on Chrome",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/app",
+      "program": "lib/main.dart",
+      "args": ["-d", "chrome", "--web-port=5000"]
+    },
+    {
+      "name": "Flutter: Run tests",
+      "type": "dart",
+      "request": "launch",
+      "cwd": "${workspaceFolder}/app",
+      "program": "test/models_test.dart"
+    }
+  ],
+  "compounds": []
+}

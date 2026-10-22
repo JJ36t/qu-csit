@@ -1,0 +1,288 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    // ─────────────────────── API (Python) ───────────────────────
+    {
+      "label": "API: Install deps",
+      "type": "shell",
+      "command": "source .venv/bin/activate && pip install -r requirements.txt",
+      "options": { "cwd": "${workspaceFolder}/api" },
+      "problemMatcher": []
+    },
+    {
+      "label": "API: Seed DB",
+      "type": "shell",
+      "command": "source .venv/bin/activate && python -m app.seed --drop",
+      "options": { "cwd": "${workspaceFolder}/api" },
+      "problemMatcher": []
+    },
+    {
+      "label": "API: Run (uvicorn)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && uvicorn app.main:app --reload --host 127.0.0.1 --port 8000",
+      "options": { "cwd": "${workspaceFolder}/api" },
+      "isBackground": true,
+      "problemMatcher": [
+        {
+          "owner": "python",
+          "fileLocation": ["relative", "${workspaceFolder}/api"],
+          "pattern": {
+            "regexp": "^(.+):(\\d+):(\\d+):\\s+(ERROR|WARNING):\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^INFO.*Application startup complete",
+            "endsPattern": "^Uvicorn running on"
+          }
+        }
+      ]
+    },
+    {
+      "label": "API: Test (pytest + coverage)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && pytest tests/ --cov=app --cov-report=term-missing --tb=short",
+      "options": { "cwd": "${workspaceFolder}/api" },
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "API: Test (current file)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && pytest ${relativeFile} -v --tb=short",
+      "options": { "cwd": "${workspaceFolder}/api" },
+      "problemMatcher": []
+    },
+    {
+      "label": "API: Lint (ruff)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && ruff check .",
+      "options": { "cwd": "${workspaceFolder}/api" },
+      "problemMatcher": ["$ruff-check"]
+    },
+    {
+      "label": "API: Format (ruff format)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && ruff format .",
+      "options": { "cwd": "${workspaceFolder}/api" },
+      "problemMatcher": []
+    },
+    {
+      "label": "API: Migrate (alembic)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && alembic upgrade head",
+      "options": { "cwd": "${workspaceFolder}/api" },
+      "problemMatcher": []
+    },
+    {
+      "label": "API: New migration",
+      "type": "shell",
+      "command": "source .venv/bin/activate && alembic revision --autogenerate -m \"${input:migration_message}\"",
+      "options": { "cwd": "${workspaceFolder}/api" },
+      "inputs": [
+        {
+          "id": "migration_message",
+          "type": "promptString",
+          "description": "Migration message",
+          "default": "auto"
+        }
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "API: Backup + restore test",
+      "type": "shell",
+      "command": "source .venv/bin/activate && python -m app.scripts.backup --output ./backups",
+      "options": { "cwd": "${workspaceFolder}/api" },
+      "problemMatcher": []
+    },
+
+    // ─────────────────────── Admin (React) ───────────────────────
+    {
+      "label": "Admin: Install",
+      "type": "shell",
+      "command": "npm install",
+      "options": { "cwd": "${workspaceFolder}/admin" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Admin: Dev (vite)",
+      "type": "shell",
+      "command": "npm run dev",
+      "options": { "cwd": "${workspaceFolder}/admin" },
+      "isBackground": true,
+      "problemMatcher": [
+        {
+          "owner": "typescript",
+          "fileLocation": ["relative", "${workspaceFolder}/admin"],
+          "pattern": {
+            "regexp": "^([^\\s].*)\\((\\d+),(\\d+)\\):\\s+(error|warning)\\s+TS\\d+:\\s+(.*)$",
+            "file": 1,
+            "line": 2,
+            "column": 3,
+            "severity": 4,
+            "message": 5
+          },
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": "^VITE v\\d",
+            "endsPattern": "^\\s*Local:\\s+http://localhost"
+          }
+        }
+      ]
+    },
+    {
+      "label": "Admin: Build",
+      "type": "shell",
+      "command": "npm run build",
+      "options": { "cwd": "${workspaceFolder}/admin" },
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$tsc"]
+    },
+    {
+      "label": "Admin: Lint",
+      "type": "shell",
+      "command": "npm run lint",
+      "options": { "cwd": "${workspaceFolder}/admin" },
+      "problemMatcher": ["$eslint-stylish"]
+    },
+
+    // ─────────────────────── Flutter ───────────────────────
+    {
+      "label": "Flutter: Create platform folders",
+      "type": "shell",
+      "command": "if [ ! -d android ]; then mv pubspec.yaml pubspec.yaml.bak && mv lib lib.bak 2>/dev/null; mv test test.bak 2>/dev/null; mv assets assets.bak 2>/dev/null; mv l10n.yaml l10n.yaml.bak 2>/dev/null; mv analysis_options.yaml analysis_options.yaml.bak 2>/dev/null; flutter create --org iq.edu.qu.csit --platforms=android,ios --project-name csit_app . && rm pubspec.yaml && mv pubspec.yaml.bak pubspec.yaml && rm -rf lib test assets 2>/dev/null; mv lib.bak lib 2>/dev/null; mv test.bak test 2>/dev/null; mv assets.bak assets 2>/dev/null; mv l10n.yaml.bak l10n.yaml 2>/dev/null; mv analysis_options.yaml.bak analysis_options.yaml 2>/dev/null; fi",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Pub get",
+      "type": "shell",
+      "command": "flutter pub get",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Codegen (build_runner)",
+      "type": "shell",
+      "command": "flutter pub run build_runner build --delete-conflicting-outputs",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: gen-l10n",
+      "type": "shell",
+      "command": "flutter gen-l10n",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Run (debug)",
+      "type": "shell",
+      "command": "flutter run --dart-define=API_BASE_URL=http://10.0.2.2:8000",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Run (release)",
+      "type": "shell",
+      "command": "flutter run --release --dart-define=API_BASE_URL=http://10.0.2.2:8000",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Build APK (debug)",
+      "type": "shell",
+      "command": "flutter build apk --debug --dart-define=API_BASE_URL=http://10.0.2.2:8000",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Build AAB (release)",
+      "type": "shell",
+      "command": "flutter build appbundle --release --dart-define=API_BASE_URL=https://your-domain.com",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Test",
+      "type": "shell",
+      "command": "flutter test",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Analyze",
+      "type": "shell",
+      "command": "flutter analyze",
+      "options": { "cwd": "${workspaceFolder}/app" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Flutter: Doctor",
+      "type": "shell",
+      "command": "flutter doctor -v",
+      "problemMatcher": []
+    },
+
+    // ─────────────────────── Docker ───────────────────────
+    {
+      "label": "Docker: Up (all services)",
+      "type": "shell",
+      "command": "docker compose up --build -d",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: Down",
+      "type": "shell",
+      "command": "docker compose down",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    },
+    {
+      "label": "Docker: Logs (tail)",
+      "type": "shell",
+      "command": "docker compose logs -f --tail=100",
+      "options": { "cwd": "${workspaceFolder}" },
+      "isBackground": true,
+      "problemMatcher": []
+    },
+
+    // ─────────────────────── Composite ───────────────────────
+    {
+      "label": "🚀 Start: API + Admin (dev)",
+      "dependsOn": ["API: Run (uvicorn)", "Admin: Dev (vite)"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "🧪 Test: All (API + Admin + Flutter)",
+      "dependsOn": ["API: Test (pytest + coverage)", "Admin: Build", "Flutter: Test"],
+      "dependsOrder": "parallel",
+      "problemMatcher": []
+    },
+    {
+      "label": "🆕 First-time setup",
+      "dependsOn": [
+        "API: Install deps",
+        "Admin: Install",
+        "Flutter: Create platform folders",
+        "Flutter: Pub get",
+        "Flutter: Codegen (build_runner)",
+        "Flutter: gen-l10n",
+        "API: Migrate (alembic)",
+        "API: Seed DB"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    }
+  ]
+}

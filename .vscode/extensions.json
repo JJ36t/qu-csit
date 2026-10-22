@@ -1,0 +1,22 @@
+{
+  "recommendations": [
+    "ms-python.python",
+    "ms-python.vscode-pylance",
+    "charliermarsh.ruff",
+    "ms-python.debugpy",
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "dart-code.dart-code",
+    "dart-code.flutter",
+    "redhat.vscode-yaml",
+    "ms-azuretools.vscode-docker",
+    "rangav.vscode-thunder-client",
+    "eamodio.gitlens",
+    "mhutchie.git-graph",
+    "vscodevim.vim",
+    "github.copilot"
+  ],
+  "unwantedRecommendations": [
+    "ms-vscode-remote.remote-containers"
+  ]
+}
