@@ -47,3 +47,4 @@ android/local.properties
 pg_data/
 redis_data/
 dev.db test.db .venv node_modules dist storage/
+admin/tsconfig.tsbuildinfo
