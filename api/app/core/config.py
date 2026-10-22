@@ -20,18 +20,20 @@ from dotenv import load_dotenv
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 # Load api/.env into the process environment before Settings reads it.
-# - In dev/test (APP_ENV unset or development): .env WINS over stale OS env
+# - In dev (APP_ENV=development or unset): .env WINS over stale OS env
 #   exports (the sandbox shell has unrelated DATABASE_URL exports).
+# - In test (APP_ENV=test): .env is NOT loaded — CI env vars win.
 # - In staging/production: docker-compose sets real env vars AFTER the
 #   container starts; .env is NOT loaded so those win.
 import os as _os
 
 _ENV_FILE = Path(__file__).resolve().parents[2] / ".env"
-_force_env_file = _os.environ.get("APP_ENV", "development") in ("development", "test", "")
-if _ENV_FILE.exists() and _force_env_file:
+_app_env = _os.environ.get("APP_ENV", "development")
+if _ENV_FILE.exists() and _app_env == "development":
     load_dotenv(_ENV_FILE, override=True)
-elif _ENV_FILE.exists():
+elif _ENV_FILE.exists() and _app_env not in ("test", "staging", "production"):
     load_dotenv(_ENV_FILE, override=False)  # prod: real env vars win
+# test/staging/production: .env is NOT loaded at all — only real env vars used
 
 
 class Settings(BaseSettings):
@@ -44,7 +46,7 @@ class Settings(BaseSettings):
 
     # ── App ──
     app_name: str = "QU-CSIT API"
-    app_env: Literal["development", "staging", "production"] = "development"
+    app_env: Literal["development", "test", "staging", "production"] = "development"
     app_debug: bool = True
     app_timezone: str = "Asia/Baghdad"
     app_week_start: str = "sunday"
