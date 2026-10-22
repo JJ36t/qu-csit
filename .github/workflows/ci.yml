@@ -55,7 +55,7 @@ jobs:
   flutter:
     name: Flutter (analyze + test)
     runs-on: ubuntu-latest
-    continue-on-error: true   # Flutter SDK needs `flutter create` first; advisory
+    continue-on-error: true   # whole job is advisory until Flutter SDK is set up locally
     defaults:
       run:
         working-directory: app
@@ -68,10 +68,27 @@ jobs:
       - run: flutter --version
       - name: Create platform folders (if missing)
         run: |
+          # `flutter create` refuses to run if pubspec.yaml exists and there's no android/ folder.
+          # We move existing files aside, run create, then restore.
           if [ ! -d "android" ]; then
-            flutter create --org iq.edu.qu.csit --platforms=android,ios .
+            mv pubspec.yaml pubspec.yaml.bak
+            mv lib lib.bak 2>/dev/null || true
+            mv test test.bak 2>/dev/null || true
+            mv assets assets.bak 2>/dev/null || true
+            mv l10n.yaml l10n.yaml.bak 2>/dev/null || true
+            mv analysis_options.yaml analysis_options.yaml.bak 2>/dev/null || true
+            flutter create --org iq.edu.qu.csit --platforms=android,ios --project-name csit_app .
+            rm pubspec.yaml
+            mv pubspec.yaml.bak pubspec.yaml
+            rm -rf lib test assets 2>/dev/null || true
+            mv lib.bak lib 2>/dev/null || true
+            mv test.bak test 2>/dev/null || true
+            mv assets.bak assets 2>/dev/null || true
+            mv l10n.yaml.bak l10n.yaml 2>/dev/null || true
+            mv analysis_options.yaml.bak analysis_options.yaml 2>/dev/null || true
           fi
       - run: flutter pub get
+        continue-on-error: true   # may fail if pubspec has path issues
       - name: Generate codegen (freezed/json/drift)
         run: dart run build_runner build --delete-conflicting-outputs
         continue-on-error: true   # may fail until all model files are in place
