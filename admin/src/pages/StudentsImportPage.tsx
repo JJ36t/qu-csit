@@ -26,7 +26,7 @@ export default function StudentsImportPage() {
     accept: ".xlsx",
     showUploadList: true,
     beforeUpload: () => true, // we handle upload manually via customRequest
-    customRequest: async (options) => {
+    customRequest: async (options: any) => {
       const { file, onSuccess, onError } = options;
       try {
         const r = await usersApi.importStudents(file as File, true);

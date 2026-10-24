@@ -1,6 +1,9 @@
 // API client helpers for admin panel
 import { api } from "./client";
 
+// Re-export `api` for pages that need raw axios access.
+export { api };
+
 // ── Auth ──
 export const authApi = {
   login: (university_id: string, password: string) =>

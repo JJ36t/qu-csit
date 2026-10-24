@@ -10,6 +10,7 @@ import {
   BellOutlined,
   AuditOutlined,
   FileExcelOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -18,15 +19,16 @@ const { Sider } = Layout;
 const items = [
   { key: "/dashboard", icon: <DashboardOutlined />, label: "الرئيسية" },
   { key: "/academic", icon: <DatabaseOutlined />, label: "البنية الأكاديمية" },
-  { key: "/groups", icon: <TeamOutlined />, label: "الشعب", disabled: true },
-  { key: "/offerings", icon: <BookOutlined />, label: "تدريس المواد", disabled: true },
+  { key: "/groups", icon: <TeamOutlined />, label: "الشعب" },
+  { key: "/offerings", icon: <BookOutlined />, label: "تدريس المواد" },
   { key: "/timetable", icon: <CalendarOutlined />, label: "الجدول" },
+  { key: "/materials", icon: <FileTextOutlined />, label: "المحاضرات" },
   { key: "/students", icon: <FileExcelOutlined />, label: "استيراد الطلاب" },
   { key: "/announcements", icon: <NotificationOutlined />, label: "الإعلانات" },
   { key: "/absence-rules", icon: <ScheduleOutlined />, label: "قواعد الغياب" },
-  { key: "/sessions", icon: <ScheduleOutlined />, label: "الحضور", disabled: true },
-  { key: "/notifications", icon: <BellOutlined />, label: "الإشعارات", disabled: true },
-  { key: "/audit-logs", icon: <AuditOutlined />, label: "سجل التدقيق", disabled: true },
+  { key: "/sessions", icon: <ScheduleOutlined />, label: "الحضور" },
+  { key: "/notifications", icon: <BellOutlined />, label: "الإشعارات" },
+  { key: "/audit-logs", icon: <AuditOutlined />, label: "سجل التدقيق" },
 ];
 
 export default function AppSidebar() {
